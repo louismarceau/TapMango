@@ -16,13 +16,13 @@ namespace SmsRateLimiter.Controllers
         }
         
         [HttpGet]
-        public IActionResult Get()
+        public async IActionResult Get()
         {
             return Ok("Hello from SMS");
         }
 
         [HttpGet("can-send-sms")]
-        public async Task<IActionResult> CanSendSms([From Query] string phoneNumber)
+        public async Task<IActionResult> CanSendSms([FromQuery] string phoneNumber)
         {
             if (string.IsNullOrEmpty(phoneNumber))
             {
