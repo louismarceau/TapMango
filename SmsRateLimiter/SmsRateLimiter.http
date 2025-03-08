@@ -4,3 +4,11 @@ GET {{SmsRateLimiter_HostAddress}}/weatherforecast/
 Accept: application/json
 
 ###
+
+GET {{SmsRateLimiter_HostAddress}}/api/sms/can-send-sms?phoneNumber=1234567890
+Accept: application/json
+
+###
+
+GET {{SmsRateLimiter_HostAddress}}/api/sms/hello
+Accept: application/json

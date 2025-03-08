@@ -5,48 +5,48 @@ using System.Threading.Tasks;
 namespace SmsRateLimiter.Controllers
 {
     [ApiController]
-    [Route("api/sms")]
+    [Route("api/[controller]")]
     public class SmsController: ControllerBase
     {
-        private readonly RateLimiter _rateLimiter;
+        // private readonly RateLimiter _rateLimiter;
 
-        public SmsController(RateLimiter rateLimiter)
-        {
-            _rateLimiter = rateLimiter;
-        }
+        // public SmsController(RateLimiter rateLimiter)
+        // {
+        //     _rateLimiter = rateLimiter;
+        // }
         
-        [HttpGet]
-        public async IActionResult Get()
+        [HttpGet("hello")]
+        public string Get()
         {
-            return Ok("Hello from SMS");
+            return "Hello from SMS";
         }
 
-        [HttpGet("can-send-sms")]
-        public async Task<IActionResult> CanSendSms([FromQuery] string phoneNumber)
-        {
-            if (string.IsNullOrEmpty(phoneNumber))
-            {
-                return BadRequest("Phone number is required");
-            }
+        // [HttpGet("can-send-sms")]
+        // public async Task<IActionResult> CanSendSms([FromQuery] string phoneNumber)
+        // {
+        //     if (string.IsNullOrEmpty(phoneNumber))
+        //     {
+        //         return BadRequest("Phone number is required");
+        //     }
 
-            try
-            {
-                await _rateLimiter.CanSendSms(phoneNumber);
-            }
-            catch (RateLimitExceededException ex)
-            {
-                return StatusCode(429, ex.Message);
-            }
-            catch (GlobalRateLimitExceededException ex)
-            {
-                return StatusCode(429, ex.Message);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, "An error occurred while processing your request");
-            }
+        //     try
+        //     {
+        //         await _rateLimiter.CanSendSms(phoneNumber);
+        //     }
+        //     catch (RateLimitExceededException ex)
+        //     {
+        //         return StatusCode(429, ex.Message);
+        //     }
+        //     catch (GlobalRateLimitExceededException ex)
+        //     {
+        //         return StatusCode(429, ex.Message);
+        //     }
+        //     catch (Exception ex)
+        //     {
+        //         return StatusCode(500, "An error occurred while processing your request");
+        //     }
 
-            return Ok(canSendSms);
-        }
+        //     return Ok(canSendSms);
+        // }
     }
 }
