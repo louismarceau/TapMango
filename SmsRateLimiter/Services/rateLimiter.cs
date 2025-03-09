@@ -53,9 +53,10 @@ namespace SmsRateLimiter.Services
                 throw new GlobalRateLimitExceededException(phoneNumber);
             }
 
+            // time until the next message window, ensures that the count is reset every message window
+            // multiple messages sent in the same window, will expire at the same time
+            var milliseconds = 1000 - (now.ToUnixTimeMilliseconds() % 1000);         
             // Update Counts in Redis Db
-            var milliseconds = 1000 - (now.ToUnixTimeMilliseconds() % 1000); // time until the next second, ensures that the count is reset every second
-                                                                             // multiple messages sent in the same second, will expire at the same time
             var transaction = _db.CreateTransaction();
             _ = transaction.StringIncrementAsync(keyNumber);
             _ = transaction.StringIncrementAsync(keyGlobal);
