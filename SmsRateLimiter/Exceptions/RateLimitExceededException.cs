@@ -2,7 +2,8 @@ namespace SmsRateLimiter.Exceptions
 {
     public class RateLimitExceededException : Exception
     {
-        public RateLimitExceededException(string message = "Rate Limit Exceeded for this number") : base(message)
+        public RateLimitExceededException(string phoneNumber)
+            : base($"Rate Limit Exceeded for this number: {phoneNumber}")
         {
         }
     }

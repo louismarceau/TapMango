@@ -35,14 +35,14 @@ namespace SmsRateLimiter.Services
             var numberCount = (int)(await _db.StringGetAsync(keyNumber));
             if (numberCount >= MAX_PER_NUMBER_PER_SEC)
             {
-                throw new RateLimitExceededException();
+                throw new RateLimitExceededException(phoneNumber);
             }
 
             // Check and enforce Global Limit
             var globalCount = (int)(await _db.StringGetAsync(keyGlobal));
             if (globalCount >= MAX_GLOBAL_PER_SEC)
             {
-                throw new GlobalRateLimitExceededException();
+                throw new GlobalRateLimitExceededException(phoneNumber);
             }
 
             // Update Counts in Redis Db
