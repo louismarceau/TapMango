@@ -7,12 +7,18 @@
     <h3>Rate Limits</h3>
     <table>
       <tr>
+        <th>Account</th>
         <th>Phone Number</th>
         <th>Messages Sent (Last Second)</th>
+        <th>Message Limit</th>
+        <th>Date Time</th>
       </tr>
-      <tr *ngFor="let limit of rateLimits">
-        <td>{{ limit.phoneNumber }}</td>
-        <td>{{ limit.count }}</td>
+      <tr *ngFor="let key of rateLimits | keyvalue">
+        <td>{{ key.value.accountNumber }}</td>
+        <td>{{ key.value.phoneNumber }}</td>
+        <td>{{ key.value.count }}</td>
+        <td>{{ key.value.limit }}</td>
+        <td>{{ key.value.dateTime }}</td>
       </tr>
     </table>
   </div>

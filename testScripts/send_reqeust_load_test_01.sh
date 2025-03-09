@@ -9,8 +9,8 @@ fi
 # Number of iterations
 NUM_ITERATIONS=$1
 
-URL="http://localhost:5130/api/sms/can-send-sms?phoneNumber=3332229090"
-URL2="http://localhost:5130/api/sms/can-send-sms?phoneNumber=5551113030"
+URL="http://localhost:5130/api/sms/can-send-sms?accountNumber=AC3313&phoneNumber=3332229090"
+URL2="http://localhost:5130/api/sms/can-send-sms?AccountNumber=AC3313&phoneNumber=5551113030"
 
 for i in $(seq 1 $NUM_ITERATIONS)
 do

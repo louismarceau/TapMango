@@ -31,29 +31,31 @@ namespace SmsRateLimiter.Services
         /// <param name="phoneNumber"></param>
         /// <throws>RateLimitExceededException</throws>
         /// <throws>GlobalRateLimitExceededException</throws>
-        public async Task CheckLimits(string phoneNumber)
+        public async Task CheckLimits(string accountNumber, string phoneNumber)
         {
-            var now = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-            var keyNumber = $"rate_limit:{phoneNumber}";
-            var keyGlobal = "rate_limit:global";
+            var now = DateTimeOffset.UtcNow;
+            var keyNumber = $"rate_limit:{accountNumber}{phoneNumber}";
+            var keyGlobal = $"rate_limit:{accountNumber}global";
+            var numberCount = (int)(await _db.StringGetAsync(keyNumber));
+            var globalCount = (int)(await _db.StringGetAsync(keyGlobal));
 
             // Check and enforce Per Number Limit
-            var numberCount = (int)(await _db.StringGetAsync(keyNumber));
             if (numberCount >= MAX_PER_NUMBER_PER_SEC)
             {
+                BroadcastRateUpdate(accountNumber, phoneNumber, numberCount++, globalCount, now);
                 throw new RateLimitExceededException(phoneNumber);
             }
 
             // Check and enforce Global Limit
-            var globalCount = (int)(await _db.StringGetAsync(keyGlobal));
             if (globalCount >= MAX_GLOBAL_PER_SEC)
             {
+                BroadcastRateUpdate(accountNumber, phoneNumber, numberCount, globalCount++, now);
                 throw new GlobalRateLimitExceededException(phoneNumber);
             }
 
             // Update Counts in Redis Db
-            var milliseconds = 1000 - (now % 1000); // time until the next second, ensures that the count is reset every second
-                                                    // multiple messages sent in the same second, will expire at the same time
+            var milliseconds = 1000 - (now.ToUnixTimeMilliseconds() % 1000); // time until the next second, ensures that the count is reset every second
+                                                                             // multiple messages sent in the same second, will expire at the same time
             var transaction = _db.CreateTransaction();
             _ = transaction.StringIncrementAsync(keyNumber);
             _ = transaction.StringIncrementAsync(keyGlobal);
@@ -61,13 +63,15 @@ namespace SmsRateLimiter.Services
             _ = transaction.KeyExpireAsync(keyGlobal, TimeSpan.FromMilliseconds(milliseconds));
             await transaction.ExecuteAsync();
 
-            // Notify all clients of the updated rate limit
-            numberCount++;
-            globalCount++;
+            BroadcastRateUpdate(accountNumber, phoneNumber, numberCount++, globalCount++, now);
+        }
+
+        private async void BroadcastRateUpdate(string accountNumber, string phoneNumber, int numberCount, int globalCount, DateTimeOffset now)
+        {            
             var rateLimits = new[]
             {
-                new { phoneNumber, count = numberCount, limit = MAX_PER_NUMBER_PER_SEC },
-                new { phoneNumber = "global", count = globalCount, limit = MAX_GLOBAL_PER_SEC }
+                new { accountNumber, phoneNumber, count = numberCount, limit = MAX_PER_NUMBER_PER_SEC, dateTime = now },
+                new { accountNumber, phoneNumber = "global", count = globalCount, limit = MAX_GLOBAL_PER_SEC, dateTime = now }
             };
 
             await _hubContext.Clients.All.SendAsync("UpdateRateLimits", rateLimits);
