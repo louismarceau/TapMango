@@ -1,1 +1,19 @@
-<p>dashboard works!</p>
+<div class="container">
+    <h2>SMS Rate Limiter Dashboard</h2>
+    <input [(ngModel)]="phoneNumber" placeholder="Enter phone number" />
+    <button (click)="checkRateLimit()">Check</button>
+    <p *ngIf="message">{{ message }}</p>
+  
+    <h3>Rate Limits</h3>
+    <table>
+      <tr>
+        <th>Phone Number</th>
+        <th>Messages Sent (Last Second)</th>
+      </tr>
+      <tr *ngFor="let limit of rateLimits">
+        <td>{{ limit.phoneNumber }}</td>
+        <td>{{ limit.count }}</td>
+      </tr>
+    </table>
+  </div>
+  

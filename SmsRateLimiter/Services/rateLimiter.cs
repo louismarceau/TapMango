@@ -1,4 +1,5 @@
 
+using Microsoft.AspNetCore.SignalR;
 using SmsRateLimiter.Exceptions;
 using StackExchange.Redis;
 
@@ -7,12 +8,17 @@ namespace SmsRateLimiter.Services
     public class RateLimiter : IRateLimiter
     {
         private readonly IDatabase _db;
+        private readonly IHubContext<SmsHub> _hubContext;
         private readonly int MAX_PER_NUMBER_PER_SEC;
         private readonly int MAX_GLOBAL_PER_SEC;
 
-        public RateLimiter(IConfiguration configuration, IConnectionMultiplexer redis)
-        {
+        public RateLimiter(
+            IConfiguration configuration,
+            IConnectionMultiplexer redis,
+            IHubContext<SmsHub> hubContext
+        ) {
             _db = redis.GetDatabase();
+            _hubContext = hubContext;
             MAX_PER_NUMBER_PER_SEC = configuration.GetValue<int>("RateLimiter:PerNumber");
             MAX_GLOBAL_PER_SEC = configuration.GetValue<int>("RateLimiter:Global");
         }
@@ -54,6 +60,17 @@ namespace SmsRateLimiter.Services
             _ = transaction.KeyExpireAsync(keyNumber, TimeSpan.FromMilliseconds(milliseconds));
             _ = transaction.KeyExpireAsync(keyGlobal, TimeSpan.FromMilliseconds(milliseconds));
             await transaction.ExecuteAsync();
+
+            // Notify all clients of the updated rate limit
+            numberCount++;
+            globalCount++;
+            var rateLimits = new[]
+            {
+                new { phoneNumber, count = numberCount, limit = MAX_PER_NUMBER_PER_SEC },
+                new { phoneNumber = "global", count = globalCount, limit = MAX_GLOBAL_PER_SEC }
+            };
+
+            await _hubContext.Clients.All.SendAsync("UpdateRateLimits", rateLimits);
         }
     }
 }

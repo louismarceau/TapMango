@@ -11,6 +11,7 @@ redisConfig.AbortOnConnectFail = false;
 builder.Services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Connect(redisConfig));
 builder.Services.AddTransient<IRateLimiter, RateLimiter>();
 builder.Services.AddControllers();
+builder.Services.AddSignalR();
 
 var app = builder.Build();
 
@@ -20,6 +21,13 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
-app.MapControllers();
+app.UseRouting();
+
+app.UseEndpoints(endpoints =>
+{
+    _ = endpoints.MapControllers();
+    _ = endpoints.MapHub<SmsHub>("/smsHub");
+});
+
 
 app.Run();
