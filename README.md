@@ -61,5 +61,5 @@ Where **100** is the number of iterations the script will preform.
 k6 is a tool from Grafana Labs for preforming load testing.
 
 ```console
-k6 load-test.js
+k6 run load-test.js
 ```
