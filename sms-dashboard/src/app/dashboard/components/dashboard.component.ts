@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
@@ -12,17 +12,29 @@ import { Observable } from 'rxjs';
   styleUrl: './dashboard.component.css'
 })
 
-export class DashboardComponent implements OnInit {
+export class DashboardComponent implements OnInit, OnDestroy {
   phoneNumber: string = '';
   message: string = '';
-  rateLimits: { [key: string]: any } = {};
+  rateLimits: { [key: string]: any } = {} as { [key: string]: any };;
+  filteredRateLimits: { [key: string]: any } = {} as { [key: string]: any };
+  uniqueAccounts: string[] = [];
+  uniquePhoneNumbers: string[] = [];
+  selectedAccountNumber: string = '';
+  selectedPhoneNumber: string = '';
   private hubConnection!: signalR.HubConnection;
   private readonly baseUrl = 'http://localhost:5130/';
+  private intervalId: any;
+  private readonly tableCleanUpIntervalSeconds = 5;
 
   constructor(private http: HttpClient) {}
 
   ngOnInit() {
     this.startSmsHubConnection();
+    this.startPeriodicTableCleanUp();
+  }
+
+  ngOnDestroy(): void {
+    this.stopPeriodicTableCleanUp();
   }
 
   checkRateLimit() {
@@ -47,6 +59,100 @@ export class DashboardComponent implements OnInit {
         var key = `${rateLimit.accountNumber}|${rateLimit.phoneNumber}`
         this.rateLimits[key] = rateLimit;
       });
+
+      this.doRateLimitTableUpdates();
     });
+  }
+
+  startPeriodicTableCleanUp() {
+    this.intervalId = setInterval(() => {
+      this.doPeriodicTableCleanUp();
+    }, this.tableCleanUpIntervalSeconds * 1000);
+  }
+
+  stopPeriodicTableCleanUp() {
+    if (this.intervalId) {
+      clearInterval(this.intervalId);
+    }
+  }
+
+  doPeriodicTableCleanUp() {
+    const currentTime = new Date().getTime();
+    const rateLimits = this.rateLimits;
+
+    Object.keys(rateLimits).forEach(key => {
+      const rateLimit = rateLimits[key];
+      const lastUpdatedTime = new Date(rateLimit.dateTime).getTime();
+      const elapsedTime = (currentTime - lastUpdatedTime) / 1000;
+
+      if (elapsedTime > this.tableCleanUpIntervalSeconds) {
+        delete this.rateLimits[key];
+      }
+    });
+
+    this.doRateLimitTableUpdates();
+  }
+  
+  doRateLimitTableUpdates()
+  {
+    this.updateUniqueValues();
+    this.filterRateLimits();
+    this.sortRateLimits();
+  }
+
+  updateUniqueValues() {
+    const accounts = new Set<string>();
+    const phoneNumbers = new Set<string>();
+
+    Object.values(this.rateLimits).forEach(rateLimit => {
+      accounts.add(rateLimit.accountNumber);
+      phoneNumbers.add(rateLimit.phoneNumber);
+    });
+
+    this.uniqueAccounts = Array.from(accounts);
+    this.uniquePhoneNumbers = Array.from(phoneNumbers);
+  }
+
+  filterRateLimits() {
+    this.filteredRateLimits = Object.keys(this.rateLimits)
+      .filter(key => {
+        const rateLimit = this.rateLimits[key];
+        return (
+          (this.selectedAccountNumber === '' || rateLimit.accountNumber === this.selectedAccountNumber) &&
+          (this.selectedPhoneNumber === '' || rateLimit.phoneNumber === this.selectedPhoneNumber)
+        );
+      })
+      .reduce((obj: any, key) => {
+        obj[key] = this.rateLimits[key];
+        return obj;
+      }, {});
+  }
+
+  sortRateLimits() {
+    const unsortedRateLimits = Object.values(this.filteredRateLimits);
+
+    unsortedRateLimits.sort((a, b) => {
+      if (a.accountNumber < b.accountNumber) {
+        return -1;
+      }
+      if (a.accountNumber > b.accountNumber) {
+        return 1;
+      }
+      if (a.phoneNumber < b.phoneNumber) {
+        return -1;
+      }
+      if (a.phoneNumber > b.phoneNumber) {
+        return 1;
+      }
+      return 0;
+    })
+
+    const sortedRateLimits: { [key: string]: any } = {};
+    unsortedRateLimits.forEach((rateLimit) => {
+      var key = `${rateLimit.accountNumber}|${rateLimit.phoneNumber}`
+      sortedRateLimits[key] = rateLimit;
+    });
+
+    this.filteredRateLimits = sortedRateLimits;
   }
 }

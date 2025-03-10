@@ -1,19 +1,39 @@
+<ng-container *ngIf="{
+    rateLimits: rateLimits,
+    uniqueAccounts: uniqueAccounts,
+    uniquePhoneNumbers: uniquePhoneNumbers,
+    filteredRateLimits: filteredRateLimits,
+    message: message
+} as context">
 <div class="container">
     <h2>SMS Rate Limiter Dashboard</h2>
     <input [(ngModel)]="phoneNumber" placeholder="Enter phone number" />
     <button (click)="checkRateLimit()">Check</button>
-    <p *ngIf="message">{{ message }}</p>
+    <p *ngIf="context.message">{{ message }}</p>
   
     <h3>Rate Limits</h3>
+    <i>Table entries which are older than 5 seconds will be automatically removed.</i>
     <table>
       <tr>
-        <th>Account</th>
-        <th>Phone Number</th>
+        <th>
+          Account
+          <select id="accountNumberFilter" [(ngModel)]="selectedAccountNumber" (change)="doRateLimitTableUpdates()">
+            <option value="">All</option>
+            <option *ngFor="let account of context.uniqueAccounts" [value]="account">{{ account }}</option>
+          </select>
+        </th>
+        <th>
+          Phone Number
+          <select id="phoneNumberFilter" [(ngModel)]="selectedPhoneNumber" (change)="doRateLimitTableUpdates()">
+            <option value="">All</option>
+            <option *ngFor="let phone of context.uniquePhoneNumbers" [value]="phone">{{ phone }}</option>
+          </select>
+        </th>
         <th>Messages Attempts (Last Second)</th>
         <th>Message Limit</th>
         <th>Date Time</th>
       </tr>
-      <tr *ngFor="let key of rateLimits | keyvalue">
+      <tr *ngFor="let key of context.filteredRateLimits | keyvalue">
         <td>{{ key.value.accountNumber }}</td>
         <td>{{ key.value.phoneNumber }}</td>
         <td>{{ key.value.count }}</td>
@@ -22,4 +42,5 @@
       </tr>
     </table>
   </div>
+</ng-container>
   
