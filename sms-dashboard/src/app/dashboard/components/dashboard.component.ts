@@ -15,7 +15,7 @@ import { Observable } from 'rxjs';
 export class DashboardComponent implements OnInit {
   phoneNumber: string = '';
   message: string = '';
-  rateLimits: any[] = [];
+  rateLimits: { [key: string]: any } = {};
   private hubConnection!: signalR.HubConnection;
   private readonly baseUrl = 'http://localhost:5130/';
 
@@ -26,7 +26,7 @@ export class DashboardComponent implements OnInit {
   }
 
   checkRateLimit() {
-    this.http.get(`${this.baseUrl}api/sms/can-send-sms?accountNumber=A1001&phoneNumber=${this.phoneNumber}`)
+    this.http.get(`${this.baseUrl}api/sms/can-send-sms?accountNumber=SD0001&phoneNumber=${this.phoneNumber}`)
       .subscribe(
         (response: any) => this.message = response.message,
         error => this.message = error.error
@@ -44,7 +44,8 @@ export class DashboardComponent implements OnInit {
 
     this.hubConnection.on('UpdateRateLimits', (data: any[]) => {
       data.forEach((rateLimit: any) => {
-        this.rateLimits[rateLimit.phoneNumber] = rateLimit;
+        var key = `${rateLimit.accountNumber}|${rateLimit.phoneNumber}`
+        this.rateLimits[key] = rateLimit;
       });
     });
   }
