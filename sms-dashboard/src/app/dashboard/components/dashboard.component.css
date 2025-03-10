@@ -1,19 +1,43 @@
 .container {
-    padding: 20px;
-    font-family: Arial;
-  }
-  
-  table {
-    width: 100%;
-    border-collapse: collapse;
-  }
-  
-  th, td {
-    border: 1px solid black;
-    padding: 10px;
-    text-align: left;
-  }
-  
-  input {
-    margin-right: 10px;
-  }
+  padding: 20px;
+  font-family: Arial;
+}
+
+button {  
+  min-height: 33px;
+}
+
+input {
+  margin-right: 10px;
+  min-height: 27px;
+}
+
+#accountNumberFilter, #phoneNumberFilter {
+  width: fit-content;
+  min-width: 120px;
+  min-height: 27px;
+}
+
+#rateLimitTable {
+  font-family: Arial, Helvetica, sans-serif;
+  border-collapse: collapse;
+  width: 100%;
+}
+
+#rateLimitTable th, #rateLimitTable td {
+  border: 1px solid #ddd;
+  padding: 10px;
+  text-align: left;
+}
+
+#rateLimitTable tr:nth-child(even){background-color: #f2f2f2;}
+
+#rateLimitTable tr:hover {background-color: #ddd;}
+
+#rateLimitTable th {
+  padding-top: 12px;
+  padding-bottom: 12px;
+  text-align: left;
+  background-color: #04AA6D;
+  color: white;
+}

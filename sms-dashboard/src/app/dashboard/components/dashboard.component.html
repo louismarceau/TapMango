@@ -7,13 +7,13 @@
 } as context">
 <div class="container">
     <h2>SMS Rate Limiter Dashboard</h2>
-    <input [(ngModel)]="phoneNumber" placeholder="Enter phone number" />
+    <input [(ngModel)]="phoneNumber" placeholder="Enter phone number"/>
     <button (click)="checkRateLimit()">Check</button>
     <p *ngIf="context.message">{{ context.message }}</p>
   
     <h3>Rate Limits</h3>
     <i>Table entries which are older than 5 seconds will be automatically removed.</i>
-    <table>
+    <table id="rateLimitTable">
       <tr>
         <th>
           Account
