@@ -1,15 +1,15 @@
 <ng-container *ngIf="{
-    rateLimits: rateLimits,
-    uniqueAccounts: uniqueAccounts,
-    uniquePhoneNumbers: uniquePhoneNumbers,
-    filteredRateLimits: filteredRateLimits,
-    message: message
+    rateLimits: rateLimits$ | async,
+    uniqueAccounts: uniqueAccounts$ | async,
+    uniquePhoneNumbers: uniquePhoneNumbers$ | async,
+    filteredRateLimits: filteredRateLimits$ | async,
+    message: message$ | async
 } as context">
 <div class="container">
     <h2>SMS Rate Limiter Dashboard</h2>
     <input [(ngModel)]="phoneNumber" placeholder="Enter phone number" />
     <button (click)="checkRateLimit()">Check</button>
-    <p *ngIf="context.message">{{ message }}</p>
+    <p *ngIf="context.message">{{ context.message }}</p>
   
     <h3>Rate Limits</h3>
     <i>Table entries which are older than 5 seconds will be automatically removed.</i>

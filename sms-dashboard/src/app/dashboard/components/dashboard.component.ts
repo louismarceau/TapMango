@@ -3,24 +3,32 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
 import * as signalR from '@microsoft/signalr';
-import { Observable } from 'rxjs';
+import { Observable, BehaviorSubject } from 'rxjs';
 
 @Component({
   selector: 'sms-dashboard',
   imports: [CommonModule, FormsModule, HttpClientModule],
   templateUrl: './dashboard.component.html',
-  styleUrl: './dashboard.component.css'
+  styleUrls: ['./dashboard.component.css']
 })
-
 export class DashboardComponent implements OnInit, OnDestroy {
+  
+  private messageSubject = new BehaviorSubject<string>('');
+  private rateLimitsSubject = new BehaviorSubject<{ [key: string]: any }>({});
+  private filteredRateLimitsSubject = new BehaviorSubject<{ [key: string]: any }>({});
+  private uniquePhoneNumbersSubject = new BehaviorSubject<string[]>([]);
+  private uniqueAccountsSubject = new BehaviorSubject<string[]>([]);
+
+  message$: Observable<string> = this.messageSubject.asObservable();
+  rateLimits$: Observable<{ [key: string]: any }> = this.rateLimitsSubject.asObservable();
+  filteredRateLimits$: Observable<{ [key: string]: any }> = this.filteredRateLimitsSubject.asObservable();
+  uniqueAccounts$: Observable<string[]> = this.uniqueAccountsSubject.asObservable();
+  uniquePhoneNumbers$: Observable<string[]> = this.uniquePhoneNumbersSubject.asObservable();
+
   phoneNumber: string = '';
-  message: string = '';
-  rateLimits: { [key: string]: any } = {} as { [key: string]: any };;
-  filteredRateLimits: { [key: string]: any } = {} as { [key: string]: any };
-  uniqueAccounts: string[] = [];
-  uniquePhoneNumbers: string[] = [];
   selectedAccountNumber: string = '';
   selectedPhoneNumber: string = '';
+
   private hubConnection!: signalR.HubConnection;
   private readonly baseUrl = 'http://localhost:5130/';
   private intervalId: any;
@@ -40,8 +48,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
   checkRateLimit() {
     this.http.get(`${this.baseUrl}api/sms/can-send-sms?accountNumber=SD0001&phoneNumber=${this.phoneNumber}`)
       .subscribe(
-        (response: any) => this.message = response.message,
-        error => this.message = error.error
+        (response: any) => this.messageSubject.next(response.message),
+        error => this.messageSubject.next(error.error)
       );
   }
 
@@ -55,11 +63,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
       .catch(err => console.error('Error while starting connection: ', err));
 
     this.hubConnection.on('UpdateRateLimits', (data: any[]) => {
+      const rateLimits = this.rateLimitsSubject.getValue();
       data.forEach((rateLimit: any) => {
-        var key = `${rateLimit.accountNumber}|${rateLimit.phoneNumber}`
-        this.rateLimits[key] = rateLimit;
+        const key = `${rateLimit.accountNumber}|${rateLimit.phoneNumber}`;
+        rateLimits[key] = rateLimit;
       });
-
+      this.rateLimitsSubject.next(rateLimits);
       this.doRateLimitTableUpdates();
     });
   }
@@ -78,7 +87,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   doPeriodicTableCleanUp() {
     const currentTime = new Date().getTime();
-    const rateLimits = this.rateLimits;
+    const rateLimits = this.rateLimitsSubject.getValue();
 
     Object.keys(rateLimits).forEach(key => {
       const rateLimit = rateLimits[key];
@@ -86,50 +95,55 @@ export class DashboardComponent implements OnInit, OnDestroy {
       const elapsedTime = (currentTime - lastUpdatedTime) / 1000;
 
       if (elapsedTime > this.tableCleanUpIntervalSeconds) {
-        delete this.rateLimits[key];
+        delete rateLimits[key];
       }
     });
 
+    this.rateLimitsSubject.next(rateLimits);
     this.doRateLimitTableUpdates();
   }
-  
-  doRateLimitTableUpdates()
-  {
+
+  doRateLimitTableUpdates() {
     this.updateUniqueValues();
     this.filterRateLimits();
     this.sortRateLimits();
   }
 
   updateUniqueValues() {
+    const rateLimits = this.rateLimitsSubject.getValue();
     const accounts = new Set<string>();
     const phoneNumbers = new Set<string>();
 
-    Object.values(this.rateLimits).forEach(rateLimit => {
+    Object.values(rateLimits).forEach(rateLimit => {
       accounts.add(rateLimit.accountNumber);
       phoneNumbers.add(rateLimit.phoneNumber);
     });
 
-    this.uniqueAccounts = Array.from(accounts);
-    this.uniquePhoneNumbers = Array.from(phoneNumbers);
+    this.uniqueAccountsSubject.next(Array.from(accounts));
+    this.uniquePhoneNumbersSubject.next(Array.from(phoneNumbers));
   }
 
   filterRateLimits() {
-    this.filteredRateLimits = Object.keys(this.rateLimits)
+    const rateLimits = this.rateLimitsSubject.getValue();
+    const filteredRateLimits = Object.keys(rateLimits)
       .filter(key => {
-        const rateLimit = this.rateLimits[key];
+        const rateLimit = rateLimits[key];
         return (
           (this.selectedAccountNumber === '' || rateLimit.accountNumber === this.selectedAccountNumber) &&
           (this.selectedPhoneNumber === '' || rateLimit.phoneNumber === this.selectedPhoneNumber)
         );
       })
       .reduce((obj: any, key) => {
-        obj[key] = this.rateLimits[key];
+        obj[key] = rateLimits[key];
         return obj;
       }, {});
+
+    this.filteredRateLimitsSubject.next(filteredRateLimits);
   }
 
   sortRateLimits() {
-    const unsortedRateLimits = Object.values(this.filteredRateLimits);
+    const filteredRateLimits = this.filteredRateLimitsSubject.getValue();
+    const unsortedRateLimits = Object.values(filteredRateLimits);
 
     unsortedRateLimits.sort((a, b) => {
       if (a.accountNumber < b.accountNumber) {
@@ -145,14 +159,14 @@ export class DashboardComponent implements OnInit, OnDestroy {
         return 1;
       }
       return 0;
-    })
+    });
 
     const sortedRateLimits: { [key: string]: any } = {};
     unsortedRateLimits.forEach((rateLimit) => {
-      var key = `${rateLimit.accountNumber}|${rateLimit.phoneNumber}`
+      const key = `${rateLimit.accountNumber}|${rateLimit.phoneNumber}`;
       sortedRateLimits[key] = rateLimit;
     });
 
-    this.filteredRateLimits = sortedRateLimits;
+    this.filteredRateLimitsSubject.next(sortedRateLimits);
   }
 }
