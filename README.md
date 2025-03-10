@@ -45,8 +45,14 @@ The web app can be accessed from
 - http://127.0.0.1:4200/
 
 ## Load Testing
+Testing focused primiarly on load testing. Unit testing is appropate to use to verifiy the API and the individual units of code in isolation. Load testing will give a better indication of the performance of the API and the expected responses.
+
+Load testing does have limits depending on the host machine, such as CPU, CPU thread count, memory, and network bandwidth. When simulating a large number of concurrent users and requests the CPU capacity can be a limiting factor.
+
 Load testing scripts can be found in the **/testScripts** directory. Included are:
-- k6 test script: **/testScripts/k6/load-test.js**
+- k6 test script:
+  - **/testScripts/k6/load-test.js**
+  - **/testScripts/k6/load-test-5Sc-1Act.js**
 - curl test script: **/testScripts/curl/send_reqeust_load_test_01.sh**
 
 ### Curl Test Script
