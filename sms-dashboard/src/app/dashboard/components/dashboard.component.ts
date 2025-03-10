@@ -26,7 +26,7 @@ export class DashboardComponent implements OnInit {
   }
 
   checkRateLimit() {
-    this.http.get(`${this.baseUrl}api/sms/can-send-sms?phoneNumber=${this.phoneNumber}`)
+    this.http.get(`${this.baseUrl}api/sms/can-send-sms?accountNumber=A1001&phoneNumber=${this.phoneNumber}`)
       .subscribe(
         (response: any) => this.message = response.message,
         error => this.message = error.error

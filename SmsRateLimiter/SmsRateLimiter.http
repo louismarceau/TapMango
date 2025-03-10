@@ -1,16 +1,16 @@
 @SmsRateLimiter_HostAddress = http://localhost:5130
 
-GET {{SmsRateLimiter_HostAddress}}/api/sms/hello
-Accept: application/json
-
-###
-
 GET {{SmsRateLimiter_HostAddress}}/api/sms/can-send-sms
 Accept: application/json
 
 ###
 
 GET {{SmsRateLimiter_HostAddress}}/api/sms/can-send-sms?phoneNumber=1234567890
+Accept: application/json
+
+###
+
+GET {{SmsRateLimiter_HostAddress}}/api/sms/can-send-sms?accountNumber=T0001&phoneNumber=1234567890
 Accept: application/json
 
 ###

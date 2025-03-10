@@ -53,6 +53,7 @@ namespace SmsRateLimiter.Services
                 throw new GlobalRateLimitExceededException(phoneNumber);
             }
 
+            // this would represent a fix message window
             // time until the next message window, ensures that the count is reset every message window
             // multiple messages sent in the same window, will expire at the same time
             var milliseconds = 1000 - (now.ToUnixTimeMilliseconds() % 1000);         
@@ -60,6 +61,7 @@ namespace SmsRateLimiter.Services
             var transaction = _db.CreateTransaction();
             _ = transaction.StringIncrementAsync(keyNumber);
             _ = transaction.StringIncrementAsync(keyGlobal);
+            // if we wanted a sliding message window, we would replace TimeSpan.FromMilliseconds(milliseconds) with TimeSpan.FromSeconds(1)
             _ = transaction.KeyExpireAsync(keyNumber, TimeSpan.FromMilliseconds(milliseconds));
             _ = transaction.KeyExpireAsync(keyGlobal, TimeSpan.FromMilliseconds(milliseconds));
             await transaction.ExecuteAsync();
@@ -67,6 +69,14 @@ namespace SmsRateLimiter.Services
             BroadcastRateUpdate(accountNumber, phoneNumber, numberCount++, globalCount++, now);
         }
 
+        /// <summary>
+        /// Broadcasts the phone numbers and the current sms count to all connectted clients
+        /// </summary>
+        /// <param name="accountNumber"></param>
+        /// <param name="phoneNumber"></param>
+        /// <param name="numberCount"></param>
+        /// <param name="globalCount"></param>
+        /// <param name="now"></param>
         private async void BroadcastRateUpdate(string accountNumber, string phoneNumber, int numberCount, int globalCount, DateTimeOffset now)
         {            
             var rateLimits = new[]
