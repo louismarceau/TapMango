@@ -60,6 +60,15 @@ Where **100** is the number of iterations the script will preform.
 ### k6 Test Script
 k6 is a tool from Grafana Labs for preforming load testing.
 
+The following load test simulates up to 10 users hitting 1 endpoint
+at a varying rate.
 ```console
 k6 run load-test.js
 ```
+
+The following load test simulates up to 10 user hitting 4 different end points at different rates. 
+```console
+k6 run load-test-5Sc-1Act.js
+```
+
+The load tests are collecting results based on a 200 responce from the API. The expected result from the load test, depending on the configured limits, is a varying amount of errors. 

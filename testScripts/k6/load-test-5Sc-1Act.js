@@ -9,21 +9,21 @@ export const options = {
     A: {
       exec: 'A_endpoint',
       executor: 'constant-arrival-rate',
-      preAllocatedVUs: 2,
+      preAllocatedVUs: 20,
       duration: '2m',
       rate: 50,
     },
     B: {
       exec: 'B_endpoint',
       executor: 'constant-arrival-rate',
-      preAllocatedVUs: 2,
+      preAllocatedVUs: 20,
       duration: '2m',
       rate: 50,
     },
     C: {
       exec: 'C_endpoint',
       executor: 'ramping-arrival-rate',
-      preAllocatedVUs: 2,
+      preAllocatedVUs: 20,
       stages: [
         { target: 0, duration: '29s' },
         { target: 100, duration: '1s' },
@@ -35,7 +35,7 @@ export const options = {
     D: {
       exec: 'D_endpoint',
       executor: 'ramping-arrival-rate',
-      preAllocatedVUs: 2,
+      preAllocatedVUs: 20,
       stages: [
         { target: 0, duration: '60s' },
         { target: 150, duration: '1s' },
@@ -46,7 +46,7 @@ export const options = {
     E: {
       exec: 'E_endpoint',
       executor: 'ramping-arrival-rate',
-      preAllocatedVUs: 2,
+      preAllocatedVUs: 20,
       stages: [
         { target: 0, duration: '60s' },
         { target: 150, duration: '1s' },
@@ -58,7 +58,12 @@ export const options = {
   thresholds: {
     errors: ['rate<0.1'], // Error rate should be less than 10%
     http_req_duration: ['p(95)<500'], // 95% of requests should be below 500ms
+    'http_req_duration{status:200}': ['max>=0'],
+    'http_req_duration{status:429}': ['max>=0'],
+    'http_req_duration{status:400}': ['max>=0'],
+    'http_req_duration{status:500}': ['max>=0'],
   },
+  'summaryTrendStats': ['min', 'med', 'avg', 'p(90)', 'p(95)', 'max', 'count'],
 };
 
 export function A_endpoint() {

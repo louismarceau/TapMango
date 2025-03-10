@@ -13,7 +13,12 @@ export let options = {
   thresholds: {
     errors: ['rate<0.1'], // Error rate should be less than 10%
     http_req_duration: ['p(95)<500'], // 95% of requests should be below 500ms
+    'http_req_duration{status:200}': ['max>=0'],
+    'http_req_duration{status:429}': ['max>=0'],
+    'http_req_duration{status:400}': ['max>=0'],
+    'http_req_duration{status:500}': ['max>=0'],
   },
+  'summaryTrendStats': ['min', 'med', 'avg', 'p(90)', 'p(95)', 'max', 'count'],
 };
 
 export default function () {
